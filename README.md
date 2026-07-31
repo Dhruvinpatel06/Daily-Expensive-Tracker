@@ -147,3 +147,4 @@ To contribute or extend the app:
 ## License
 
 This repository does not include a license file. Add one if you plan to open source the project.
+
