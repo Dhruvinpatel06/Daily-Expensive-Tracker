@@ -60,6 +60,13 @@ export function ExpenseProvider({ children }) {
     showToast('Expense deleted', 'danger');
   }, [showToast]);
 
+  // Restore July expense records
+  const restoreJulyData = useCallback(() => {
+    const updated = storage.restoreJulyData();
+    setExpenses(updated);
+    showToast('July 2026 expense data restored!');
+  }, [showToast]);
+
   // Update settings
   const updateSettings = useCallback((newSettings) => {
     const merged = { ...settings, ...newSettings };
@@ -80,6 +87,7 @@ export function ExpenseProvider({ children }) {
       addExpense,
       editExpense,
       deleteExpense,
+      restoreJulyData,
       updateSettings,
       exportCSV,
       toast,

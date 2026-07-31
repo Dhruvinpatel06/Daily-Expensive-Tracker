@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Save, Trash2, AlertTriangle } from 'lucide-react';
+import { Save, Trash2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useExpenses } from '../context/ExpenseContext';
 import { storage } from '../utils/storage';
 
@@ -14,7 +14,7 @@ const CURRENCIES = [
 ];
 
 export default function SettingsPage() {
-  const { settings, updateSettings, expenses, exportCSV } = useExpenses();
+  const { settings, updateSettings, expenses, exportCSV, restoreJulyData } = useExpenses();
   const [form, setForm] = useState({ ...settings });
   const [saved, setSaved] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -137,36 +137,64 @@ export default function SettingsPage() {
           ))}
         </div>
 
-        <div>
-          <h3 style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)' }}>
-            Export Data
-          </h3>
-          <p style={{ margin: '0 0 12px', fontSize: '13px', color: 'var(--text-muted)' }}>
-            Download all your expenses as a CSV file you can open in Excel or Google Sheets.
-          </p>
-          <button
-            id="settings-export-btn"
-            onClick={exportCSV}
-            style={{
-              padding: '10px 16px',
-              borderRadius: '10px',
-              border: '1px solid var(--border)',
-              background: 'transparent',
-              color: 'var(--text-secondary)',
-              fontSize: '14px',
-              fontFamily: 'inherit',
-              fontWeight: '600',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--border-hover)'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
-          >
-            📥 Export to CSV
-          </button>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <div>
+            <h3 style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)' }}>
+              Restore July Data
+            </h3>
+            <p style={{ margin: '0 0 10px', fontSize: '13px', color: 'var(--text-muted)' }}>
+              Retrieve all July 2026 expense records.
+            </p>
+            <button
+              id="restore-july-btn"
+              className="btn-edit"
+              onClick={restoreJulyData}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '10px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <RefreshCw size={14} /> Restore July 2026 Expenses
+            </button>
+          </div>
+
+          <div style={{ marginTop: '4px' }}>
+            <h3 style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)' }}>
+              Export Data
+            </h3>
+            <p style={{ margin: '0 0 10px', fontSize: '13px', color: 'var(--text-muted)' }}>
+              Download all your expenses as a CSV file.
+            </p>
+            <button
+              id="settings-export-btn"
+              onClick={exportCSV}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '10px',
+                border: '1px solid var(--border)',
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--border-hover)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+            >
+              📥 Export to CSV
+            </button>
+          </div>
         </div>
       </div>
 
