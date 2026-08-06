@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -17,9 +17,8 @@ import {
   getCategoryById,
   getCategoryTotals,
   getLast6MonthsData,
-  getMonthExpenses,
-  CATEGORIES,
 } from '../utils/helpers';
+import { format, parseISO } from 'date-fns';
 
 ChartJS.register(
   ArcElement, Tooltip, Legend,
@@ -53,10 +52,52 @@ const chartDefaults = {
 export default function AnalyticsPage() {
   const { expenses, settings } = useExpenses();
   const currency = settings.currency;
+  const [selectedMonth, setSelectedMonth] = useState('current');
 
-  const thisMonthExpenses = useMemo(() => getMonthExpenses(expenses, 0), [expenses]);
-  const categoryTotals = useMemo(() => getCategoryTotals(thisMonthExpenses), [thisMonthExpenses]);
+  const currentMonthKey = useMemo(() => format(new Date(), 'yyyy-MM'), []);
+
+  // Compute all available unique months from expense history
+  const availableMonths = useMemo(() => {
+    const set = new Set();
+    set.add(currentMonthKey);
+    expenses.forEach(e => {
+      try {
+        const m = format(parseISO(e.date), 'yyyy-MM');
+        set.add(m);
+      } catch (err) {
+        void err;
+      }
+    });
+    return [...set].sort().reverse();
+  }, [expenses, currentMonthKey]);
+
+  // Expenses filtered by selected month option
+  const selectedExpenses = useMemo(() => {
+    if (selectedMonth === 'all') return expenses;
+    const targetMonth = selectedMonth === 'current' ? currentMonthKey : selectedMonth;
+    return expenses.filter(e => {
+      try {
+        return format(parseISO(e.date), 'yyyy-MM') === targetMonth;
+      } catch {
+        return false;
+      }
+    });
+  }, [expenses, selectedMonth, currentMonthKey]);
+
+  const categoryTotals = useMemo(() => getCategoryTotals(selectedExpenses), [selectedExpenses]);
   const last6Months = useMemo(() => getLast6MonthsData(expenses), [expenses]);
+
+  // Human-readable label for selected month
+  const selectedMonthLabel = useMemo(() => {
+    if (selectedMonth === 'all') return 'All Time';
+    const targetMonth = selectedMonth === 'current' ? currentMonthKey : selectedMonth;
+    if (targetMonth === currentMonthKey) return 'This Month';
+    try {
+      return format(new Date(targetMonth + '-01'), 'MMMM yyyy');
+    } catch {
+      return targetMonth;
+    }
+  }, [selectedMonth, currentMonthKey]);
 
   // Pie chart data
   const pieData = useMemo(() => {
@@ -138,13 +179,13 @@ export default function AnalyticsPage() {
       tooltip: {
         ...chartDefaults.plugins.tooltip,
         callbacks: {
-          label: ctx => ` ${formatCurrency(ctx.raw, currency)} (${((ctx.raw / Object.values(categoryTotals).reduce((a, b) => a + b, 0)) * 100).toFixed(1)}%)`,
+          label: ctx => ` ${formatCurrency(ctx.raw, currency)} (${((ctx.raw / (Object.values(categoryTotals).reduce((a, b) => a + b, 0) || 1)) * 100).toFixed(1)}%)`,
         },
       },
     },
   };
 
-  const totalThisMonth = Object.values(categoryTotals).reduce((a, b) => a + b, 0);
+  const totalSelectedPeriod = Object.values(categoryTotals).reduce((a, b) => a + b, 0);
   const maxMonth = Math.max(...last6Months.map(m => m.total));
   const avgMonth = last6Months.filter(m => m.total > 0).reduce((s, m) => s + m.total, 0) /
     (last6Months.filter(m => m.total > 0).length || 1);
@@ -152,19 +193,45 @@ export default function AnalyticsPage() {
   return (
     <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
       {/* Header */}
-      <div>
-        <h1 style={{ margin: 0, fontSize: '26px', fontWeight: '800', color: 'var(--text-primary)' }}>
-          Analytics
-        </h1>
-        <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '14px' }}>
-          Visual breakdown of your spending patterns
-        </p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: '26px', fontWeight: '800', color: 'var(--text-primary)' }}>
+            Analytics
+          </h1>
+          <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '14px' }}>
+            Visual breakdown of your spending patterns
+          </p>
+        </div>
+
+        {/* Global Month Filter for Category Breakdown */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)' }}>
+            Select Period:
+          </label>
+          <select
+            id="analytics-month-select"
+            className="custom-input"
+            value={selectedMonth}
+            onChange={e => setSelectedMonth(e.target.value)}
+            style={{ width: '200px' }}
+          >
+            <option value="current">This Month ({format(new Date(), 'MMM yyyy')})</option>
+            <option value="all">All Time</option>
+            {availableMonths
+              .filter(m => m !== currentMonthKey)
+              .map(m => (
+                <option key={m} value={m}>
+                  {format(new Date(m + '-01'), 'MMMM yyyy')}
+                </option>
+              ))}
+          </select>
+        </div>
       </div>
 
       {/* Summary stats */}
       <div style={{ display: 'flex', gap: '16px' }}>
         {[
-          { label: 'This Month', value: formatCurrency(totalThisMonth, currency), emoji: '📅' },
+          { label: selectedMonthLabel, value: formatCurrency(totalSelectedPeriod, currency), emoji: '📅' },
           { label: 'Peak Month', value: formatCurrency(maxMonth, currency), emoji: '🔝' },
           { label: '6-Month Avg', value: formatCurrency(avgMonth, currency), emoji: '📊' },
           { label: 'Total Expenses', value: expenses.length, emoji: '📋' },
@@ -190,14 +257,16 @@ export default function AnalyticsPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
         {/* Pie chart */}
         <div className="glass-card" style={{ padding: '22px' }}>
-          <h3 style={{ margin: '0 0 20px', fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>
-            This Month by Category
-          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>
+              {selectedMonthLabel} by Category
+            </h3>
+          </div>
           {Object.keys(categoryTotals).length === 0 ? (
             <div className="empty-state" style={{ height: '280px' }}>
               <div style={{ fontSize: '48px' }}>📊</div>
               <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
-                No data for this month
+                No data for {selectedMonthLabel.toLowerCase()}
               </p>
             </div>
           ) : (
@@ -221,11 +290,11 @@ export default function AnalyticsPage() {
       {/* Category breakdown table */}
       <div className="glass-card" style={{ padding: '22px' }}>
         <h3 style={{ margin: '0 0 18px', fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>
-          Category Breakdown — This Month
+          Category Breakdown — {selectedMonthLabel}
         </h3>
         {Object.keys(categoryTotals).length === 0 ? (
           <div className="empty-state" style={{ padding: '30px' }}>
-            <p style={{ color: 'var(--text-muted)', margin: 0 }}>No expenses this month</p>
+            <p style={{ color: 'var(--text-muted)', margin: 0 }}>No expenses for {selectedMonthLabel.toLowerCase()}</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '12px' }}>
@@ -233,7 +302,7 @@ export default function AnalyticsPage() {
               .sort((a, b) => b[1] - a[1])
               .map(([catId, amount]) => {
                 const cat = getCategoryById(catId);
-                const pct = totalThisMonth ? ((amount / totalThisMonth) * 100).toFixed(1) : '0';
+                const pct = totalSelectedPeriod ? ((amount / totalSelectedPeriod) * 100).toFixed(1) : '0';
                 return (
                   <div
                     key={catId}
@@ -269,3 +338,4 @@ export default function AnalyticsPage() {
     </div>
   );
 }
+
