@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Save, Trash2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Save, Trash2, AlertTriangle, RefreshCw, Upload, Download, Search } from 'lucide-react';
 import { useExpenses } from '../context/ExpenseContext';
 import { storage } from '../utils/storage';
 
@@ -19,14 +19,19 @@ export default function SettingsPage() {
     updateSettings,
     expenses,
     exportCSV,
+    exportJSON,
+    importJSON,
+    importCSV,
+    scanAndRecoverAllData,
     restoreJulyAndAugustData,
     restoreJulyData,
     restoreAugustData,
-    cleanJanFebExpenses,
   } = useExpenses();
+
   const [form, setForm] = useState({ ...settings });
   const [saved, setSaved] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const fileInputRef = useRef(null);
 
   const handleSave = () => {
     updateSettings(form);
@@ -44,18 +49,42 @@ export default function SettingsPage() {
     }
   };
 
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const text = evt.target.result;
+      if (file.name.endsWith('.json')) {
+        importJSON(text);
+      } else if (file.name.endsWith('.csv')) {
+        importCSV(text);
+      } else {
+        // Try JSON first, then CSV
+        try {
+          JSON.parse(text);
+          importJSON(text);
+        } catch {
+          importCSV(text);
+        }
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   const dataSize = new Blob([JSON.stringify(storage.load())]).size;
   const formatBytes = b => b < 1024 ? `${b} B` : `${(b / 1024).toFixed(1)} KB`;
 
   return (
-    <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '28px', maxWidth: '640px' }}>
+    <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '28px', maxWidth: '680px' }}>
       {/* Header */}
       <div>
         <h1 style={{ margin: 0, fontSize: '26px', fontWeight: '800', color: 'var(--text-primary)' }}>
           Settings
         </h1>
         <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '14px' }}>
-          Customize your expense tracker
+          Customize your expense tracker & manage data
         </p>
       </div>
 
@@ -119,7 +148,7 @@ export default function SettingsPage() {
       {/* Data management */}
       <div className="glass-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <h2 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)' }}>
-          💾 Data Management
+          💾 Data Management & Recovery
         </h2>
 
         {/* Stats */}
@@ -146,19 +175,19 @@ export default function SettingsPage() {
           ))}
         </div>
 
-        {/* Restore Section */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
-          <div>
-            <h3 style={{ margin: '0 0 6px', fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
-              Restore Complete July & August 2026 Dataset
-            </h3>
-            <p style={{ margin: '0 0 10px', fontSize: '13px', color: 'var(--text-muted)' }}>
-              Recover all your authentic July 2026 and August 2026 expense records safely without overwriting your custom additions.
-            </p>
+        {/* Deep scan and recover */}
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+          <h3 style={{ margin: '0 0 6px', fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
+            🔍 Deep Scan & Recover Custom Expenses
+          </h3>
+          <p style={{ margin: '0 0 10px', fontSize: '13px', color: 'var(--text-muted)' }}>
+            Scans all browser storage slots, rescues your previously entered expenses, and automatically fixes inverted day/month dates.
+          </p>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button
-              id="restore-all-btn"
+              id="deep-scan-btn"
               className="btn-primary"
-              onClick={restoreJulyAndAugustData}
+              onClick={scanAndRecoverAllData}
               style={{
                 padding: '10px 18px',
                 borderRadius: '10px',
@@ -170,79 +199,108 @@ export default function SettingsPage() {
                 gap: '8px',
               }}
             >
-              <RefreshCw size={14} /> Restore All July & August 2026 Data
+              <Search size={14} /> Scan & Recover All Stored Expenses
+            </button>
+
+            <button
+              id="restore-all-btn"
+              className="btn-edit"
+              onClick={restoreJulyAndAugustData}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '10px',
+                fontSize: '13px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <RefreshCw size={14} /> Restore July & August 2026 Dataset
             </button>
           </div>
+        </div>
+
+        {/* Restore Section */}
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <button
+            id="restore-july-btn"
+            className="btn-edit"
+            onClick={restoreJulyData}
+            style={{
+              padding: '8px 14px',
+              borderRadius: '8px',
+              fontSize: '13px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <RefreshCw size={13} /> Restore July Only
+          </button>
+
+          <button
+            id="restore-august-btn"
+            className="btn-edit"
+            onClick={restoreAugustData}
+            style={{
+              padding: '8px 14px',
+              borderRadius: '8px',
+              fontSize: '13px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <RefreshCw size={13} /> Restore August Only
+          </button>
+        </div>
+
+        {/* Import / Export */}
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <h3 style={{ margin: '0', fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
+            Backup & Import
+          </h3>
+          <p style={{ margin: '0', fontSize: '13px', color: 'var(--text-muted)' }}>
+            Import an existing CSV or JSON backup file, or export your full history.
+          </p>
+
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            accept=".csv,.json"
+            style={{ display: 'none' }}
+          />
 
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button
-              id="restore-july-btn"
-              className="btn-edit"
-              onClick={restoreJulyData}
+              id="import-btn"
+              onClick={() => fileInputRef.current?.click()}
               style={{
-                padding: '8px 14px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              <RefreshCw size={13} /> Restore July Only
-            </button>
-
-            <button
-              id="restore-august-btn"
-              className="btn-edit"
-              onClick={restoreAugustData}
-              style={{
-                padding: '8px 14px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              <RefreshCw size={13} /> Restore August Only
-            </button>
-
-            <button
-              id="clean-jan-feb-btn"
-              onClick={cleanJanFebExpenses}
-              style={{
-                padding: '8px 14px',
-                borderRadius: '8px',
+                padding: '10px 16px',
+                borderRadius: '10px',
                 border: '1px solid var(--border)',
-                background: 'transparent',
-                color: 'var(--text-muted)',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
                 fontSize: '13px',
                 fontFamily: 'inherit',
                 fontWeight: '600',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
+                gap: '8px',
                 transition: 'all 0.2s',
               }}
-              onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--border-hover)'; }}
-              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
             >
-              🧹 Remove Outdated Jan/Feb
+              <Upload size={14} /> Import File (JSON / CSV)
             </button>
-          </div>
 
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
-            <h3 style={{ margin: '0 0 6px', fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
-              Export Data
-            </h3>
-            <p style={{ margin: '0 0 10px', fontSize: '13px', color: 'var(--text-muted)' }}>
-              Download all your expense entries as a CSV spreadsheet.
-            </p>
             <button
               id="settings-export-btn"
               onClick={exportCSV}
@@ -252,7 +310,7 @@ export default function SettingsPage() {
                 border: '1px solid var(--border)',
                 background: 'transparent',
                 color: 'var(--text-secondary)',
-                fontSize: '14px',
+                fontSize: '13px',
                 fontFamily: 'inherit',
                 fontWeight: '600',
                 cursor: 'pointer',
@@ -261,10 +319,30 @@ export default function SettingsPage() {
                 gap: '8px',
                 transition: 'all 0.2s',
               }}
-              onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--border-hover)'; }}
-              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
             >
-              📥 Export to CSV
+              <Download size={14} /> Export CSV
+            </button>
+
+            <button
+              id="settings-export-json-btn"
+              onClick={exportJSON}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '10px',
+                border: '1px solid var(--border)',
+                background: 'transparent',
+                color: 'var(--text-secondary)',
+                fontSize: '13px',
+                fontFamily: 'inherit',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.2s',
+              }}
+            >
+              <Download size={14} /> Export JSON Backup
             </button>
           </div>
         </div>

@@ -60,6 +60,13 @@ export function ExpenseProvider({ children }) {
     showToast('Expense deleted', 'danger');
   }, [showToast]);
 
+  // Scan & recover all data from all browser storage
+  const scanAndRecoverAllData = useCallback(() => {
+    const updated = storage.scanAndRecoverAllData();
+    setExpenses(updated);
+    showToast(`Recovered ${updated.length} expense records!`);
+  }, [showToast]);
+
   // Restore July & August expense records
   const restoreJulyAndAugustData = useCallback(() => {
     const updated = storage.restoreJulyAndAugustData();
@@ -81,11 +88,28 @@ export function ExpenseProvider({ children }) {
     showToast('August 2026 expense data restored!');
   }, [showToast]);
 
-  // Clean old Jan/Feb records
-  const cleanJanFebExpenses = useCallback(() => {
-    const updated = storage.cleanJanFebExpenses();
-    setExpenses(updated);
-    showToast('Removed outdated Jan/Feb entries!');
+  // Import JSON
+  const importJSON = useCallback((jsonStr) => {
+    const res = storage.importJSON(jsonStr);
+    if (res.success) {
+      const updated = storage.getExpenses();
+      setExpenses(updated);
+      showToast(`Imported ${res.count} records successfully!`);
+    } else {
+      showToast(res.error || 'Failed to import JSON', 'danger');
+    }
+  }, [showToast]);
+
+  // Import CSV
+  const importCSV = useCallback((csvStr) => {
+    const res = storage.importCSV(csvStr);
+    if (res.success) {
+      const updated = storage.getExpenses();
+      setExpenses(updated);
+      showToast(`Imported ${res.count} records successfully!`);
+    } else {
+      showToast(res.error || 'Failed to import CSV', 'danger');
+    }
   }, [showToast]);
 
   // Update settings
@@ -101,6 +125,12 @@ export function ExpenseProvider({ children }) {
     showToast('CSV exported!');
   }, [expenses, showToast]);
 
+  // Export JSON
+  const exportJSON = useCallback(() => {
+    storage.exportJSON(expenses);
+    showToast('JSON Backup exported!');
+  }, [expenses, showToast]);
+
   return (
     <ExpenseContext.Provider value={{
       expenses,
@@ -108,12 +138,15 @@ export function ExpenseProvider({ children }) {
       addExpense,
       editExpense,
       deleteExpense,
+      scanAndRecoverAllData,
       restoreJulyAndAugustData,
       restoreJulyData,
       restoreAugustData,
-      cleanJanFebExpenses,
+      importJSON,
+      importCSV,
       updateSettings,
       exportCSV,
+      exportJSON,
       toast,
     }}>
       {children}
