@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import { Search, Pencil, Trash2, ChevronDown, Filter } from 'lucide-react';
 import { useExpenses } from '../context/ExpenseContext';
-import { formatCurrency, formatDate, getCategoryById, CATEGORIES } from '../utils/helpers';
-import { format, parseISO } from 'date-fns';
+import { formatCurrency, formatDate, getCategoryById, CATEGORIES, getMonthKey, normalizeDateString } from '../utils/helpers';
+import { format } from 'date-fns';
 
 export default function ExpensesPage({ onEdit }) {
   const { expenses, deleteExpense, settings } = useExpenses();
@@ -18,10 +18,10 @@ export default function ExpensesPage({ onEdit }) {
   const months = useMemo(() => {
     const seen = new Set();
     expenses.forEach(e => {
-      try {
-        const m = format(parseISO(e.date), 'yyyy-MM');
+      const m = getMonthKey(e.date);
+      if (m && m.length === 7) {
         seen.add(m);
-      } catch {}
+      }
     });
     return [...seen].sort().reverse();
   }, [expenses]);
@@ -46,18 +46,15 @@ export default function ExpensesPage({ onEdit }) {
 
     // Month filter
     if (filterMonth !== 'all') {
-      list = list.filter(e => {
-        try { return format(parseISO(e.date), 'yyyy-MM') === filterMonth; }
-        catch { return false; }
-      });
+      list = list.filter(e => getMonthKey(e.date) === filterMonth);
     }
 
     // Sort
     switch (sortBy) {
-      case 'date-desc': list.sort((a, b) => new Date(b.date) - new Date(a.date)); break;
-      case 'date-asc': list.sort((a, b) => new Date(a.date) - new Date(b.date)); break;
-      case 'amount-desc': list.sort((a, b) => b.amount - a.amount); break;
-      case 'amount-asc': list.sort((a, b) => a.amount - b.amount); break;
+      case 'date-desc': list.sort((a, b) => new Date(normalizeDateString(b.date)) - new Date(normalizeDateString(a.date))); break;
+      case 'date-asc': list.sort((a, b) => new Date(normalizeDateString(a.date)) - new Date(normalizeDateString(b.date))); break;
+      case 'amount-desc': list.sort((a, b) => Number(b.amount) - Number(a.amount)); break;
+      case 'amount-asc': list.sort((a, b) => Number(a.amount) - Number(b.amount)); break;
     }
 
     return list;

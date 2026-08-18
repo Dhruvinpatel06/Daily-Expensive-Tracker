@@ -17,8 +17,9 @@ import {
   getCategoryById,
   getCategoryTotals,
   getLast6MonthsData,
+  getMonthKey,
 } from '../utils/helpers';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 
 ChartJS.register(
   ArcElement, Tooltip, Legend,
@@ -61,11 +62,9 @@ export default function AnalyticsPage() {
     const set = new Set();
     set.add(currentMonthKey);
     expenses.forEach(e => {
-      try {
-        const m = format(parseISO(e.date), 'yyyy-MM');
+      const m = getMonthKey(e.date);
+      if (m && m.length === 7) {
         set.add(m);
-      } catch (err) {
-        void err;
       }
     });
     return [...set].sort().reverse();
@@ -75,13 +74,7 @@ export default function AnalyticsPage() {
   const selectedExpenses = useMemo(() => {
     if (selectedMonth === 'all') return expenses;
     const targetMonth = selectedMonth === 'current' ? currentMonthKey : selectedMonth;
-    return expenses.filter(e => {
-      try {
-        return format(parseISO(e.date), 'yyyy-MM') === targetMonth;
-      } catch {
-        return false;
-      }
-    });
+    return expenses.filter(e => getMonthKey(e.date) === targetMonth);
   }, [expenses, selectedMonth, currentMonthKey]);
 
   const categoryTotals = useMemo(() => getCategoryTotals(selectedExpenses), [selectedExpenses]);

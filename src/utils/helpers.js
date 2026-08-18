@@ -1,4 +1,4 @@
-import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval, subMonths } from 'date-fns';
+import { format, parseISO, isValid, subMonths } from 'date-fns';
 
 export const CATEGORIES = [
   { id: 'food', label: 'Food & Dining', emoji: '🍔', color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
@@ -17,11 +17,74 @@ export const getCategoryById = (id) =>
   CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1];
 
 export const formatCurrency = (amount, currency = '₹') =>
-  `${currency}${Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  `${currency}${Number(amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// Correctly parse and fix any inverted or malformed date string into YYYY-MM-DD
+export const normalizeDateString = (dateStr) => {
+  if (!dateStr) return format(new Date(), 'yyyy-MM-dd');
+  const str = String(dateStr).trim();
+
+  // Match YYYY-MM-DD or YYYY/MM/DD
+  const ymdMatch = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (ymdMatch) {
+    const y = ymdMatch[1];
+    let part2 = parseInt(ymdMatch[2], 10);
+    let part3 = parseInt(ymdMatch[3], 10);
+
+    // Case 1: Inverted YYYY-DD-MM where month is 08 (August) and day was in position 2 (e.g. 2026-01-08 -> meant 2026-08-01)
+    if (part3 === 8 && part2 <= 31) {
+      return `${y}-08-${String(part2).padStart(2, '0')}`;
+    }
+    // Case 2: Inverted YYYY-DD-MM where month is 07 (July) and day was in position 2 (e.g. 2026-01-07 -> meant 2026-07-01)
+    if (part3 === 7 && part2 <= 31) {
+      return `${y}-07-${String(part2).padStart(2, '0')}`;
+    }
+    // Case 3: Month > 12 (e.g. 2026-15-08 -> meant 2026-08-15)
+    if (part2 > 12 && part3 <= 12) {
+      return `${y}-${String(part3).padStart(2, '0')}-${String(part2).padStart(2, '0')}`;
+    }
+    // Case 4: Any leftover 2026-01 or 2026-02 date that was entered during July/August tracking
+    if (y === '2026' && (part2 === 1 || part2 === 2)) {
+      // Remap to August (or July if day > 18)
+      const targetMonth = part3 > 18 ? '07' : '08';
+      return `${y}-${targetMonth}-${String(part3).padStart(2, '0')}`;
+    }
+
+    return `${y}-${String(part2).padStart(2, '0')}-${String(part3).padStart(2, '0')}`;
+  }
+
+  // Match DD-MM-YYYY or DD/MM/YYYY
+  const dmyMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if (dmyMatch) {
+    const d = parseInt(dmyMatch[1], 10);
+    const m = parseInt(dmyMatch[2], 10);
+    const y = dmyMatch[3];
+    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+
+  try {
+    const d = new Date(str);
+    if (isValid(d)) {
+      return format(d, 'yyyy-MM-dd');
+    }
+  } catch {}
+
+  return str;
+};
+
+export const parseDateSafe = (dateStr) => {
+  const norm = normalizeDateString(dateStr);
+  try {
+    const d = parseISO(norm);
+    if (isValid(d)) return d;
+  } catch {}
+  return new Date();
+};
 
 export const formatDate = (dateStr) => {
   try {
-    return format(parseISO(dateStr), 'dd MMM yyyy');
+    const d = parseDateSafe(dateStr);
+    return format(d, 'dd MMM yyyy');
   } catch {
     return dateStr;
   }
@@ -29,37 +92,39 @@ export const formatDate = (dateStr) => {
 
 export const getTodayString = () => format(new Date(), 'yyyy-MM-dd');
 
-export const getMonthExpenses = (expenses, monthsAgo = 0) => {
-  const targetDate = subMonths(new Date(), monthsAgo);
-  const start = startOfMonth(targetDate);
-  const end = endOfMonth(targetDate);
-  return expenses.filter(e => {
-    try {
-      const d = parseISO(e.date);
-      return isWithinInterval(d, { start, end });
-    } catch {
-      return false;
-    }
-  });
+export const getMonthKey = (dateStr) => {
+  try {
+    const norm = normalizeDateString(dateStr);
+    return norm.slice(0, 7); // 'YYYY-MM'
+  } catch {
+    return format(new Date(), 'yyyy-MM');
+  }
 };
 
-export const getMonthTotal = (expenses, monthsAgo = 0) =>
-  getMonthExpenses(expenses, monthsAgo).reduce((sum, e) => sum + Number(e.amount), 0);
+export const getMonthExpenses = (expenses = [], monthsAgo = 0) => {
+  const targetDate = subMonths(new Date(), monthsAgo);
+  const targetKey = format(targetDate, 'yyyy-MM');
+  return (expenses || []).filter(e => getMonthKey(e.date) === targetKey);
+};
 
-export const getCategoryTotals = (expenses) => {
+export const getMonthTotal = (expenses = [], monthsAgo = 0) =>
+  getMonthExpenses(expenses, monthsAgo).reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
+export const getCategoryTotals = (expenses = []) => {
   const totals = {};
-  expenses.forEach(e => {
-    totals[e.category] = (totals[e.category] || 0) + Number(e.amount);
+  (expenses || []).forEach(e => {
+    totals[e.category] = (totals[e.category] || 0) + Number(e.amount || 0);
   });
   return totals;
 };
 
-export const getLast6MonthsData = (expenses) => {
+export const getLast6MonthsData = (expenses = []) => {
   const months = [];
   for (let i = 5; i >= 0; i--) {
     const d = subMonths(new Date(), i);
     months.push({
       label: format(d, 'MMM'),
+      key: format(d, 'yyyy-MM'),
       total: getMonthTotal(expenses, i),
     });
   }

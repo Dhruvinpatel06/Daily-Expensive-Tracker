@@ -14,7 +14,16 @@ const CURRENCIES = [
 ];
 
 export default function SettingsPage() {
-  const { settings, updateSettings, expenses, exportCSV, restoreJulyData } = useExpenses();
+  const {
+    settings,
+    updateSettings,
+    expenses,
+    exportCSV,
+    restoreJulyAndAugustData,
+    restoreJulyData,
+    restoreAugustData,
+    cleanJanFebExpenses,
+  } = useExpenses();
   const [form, setForm] = useState({ ...settings });
   const [saved, setSaved] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -137,39 +146,102 @@ export default function SettingsPage() {
           ))}
         </div>
 
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        {/* Restore Section */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
           <div>
-            <h3 style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)' }}>
-              Restore July Data
+            <h3 style={{ margin: '0 0 6px', fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
+              Restore Complete July & August 2026 Dataset
             </h3>
             <p style={{ margin: '0 0 10px', fontSize: '13px', color: 'var(--text-muted)' }}>
-              Retrieve all July 2026 expense records.
+              Recover all your authentic July 2026 and August 2026 expense records safely without overwriting your custom additions.
             </p>
+            <button
+              id="restore-all-btn"
+              className="btn-primary"
+              onClick={restoreJulyAndAugustData}
+              style={{
+                padding: '10px 18px',
+                borderRadius: '10px',
+                fontSize: '13px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <RefreshCw size={14} /> Restore All July & August 2026 Data
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button
               id="restore-july-btn"
               className="btn-edit"
               onClick={restoreJulyData}
               style={{
-                padding: '10px 16px',
-                borderRadius: '10px',
-                fontSize: '14px',
+                padding: '8px 14px',
+                borderRadius: '8px',
+                fontSize: '13px',
                 fontWeight: '600',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
+                gap: '6px',
               }}
             >
-              <RefreshCw size={14} /> Restore July 2026 Expenses
+              <RefreshCw size={13} /> Restore July Only
+            </button>
+
+            <button
+              id="restore-august-btn"
+              className="btn-edit"
+              onClick={restoreAugustData}
+              style={{
+                padding: '8px 14px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <RefreshCw size={13} /> Restore August Only
+            </button>
+
+            <button
+              id="clean-jan-feb-btn"
+              onClick={cleanJanFebExpenses}
+              style={{
+                padding: '8px 14px',
+                borderRadius: '8px',
+                border: '1px solid var(--border)',
+                background: 'transparent',
+                color: 'var(--text-muted)',
+                fontSize: '13px',
+                fontFamily: 'inherit',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--border-hover)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)'; }}
+            >
+              🧹 Remove Outdated Jan/Feb
             </button>
           </div>
 
-          <div style={{ marginTop: '4px' }}>
-            <h3 style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)' }}>
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+            <h3 style={{ margin: '0 0 6px', fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
               Export Data
             </h3>
             <p style={{ margin: '0 0 10px', fontSize: '13px', color: 'var(--text-muted)' }}>
-              Download all your expenses as a CSV file.
+              Download all your expense entries as a CSV spreadsheet.
             </p>
             <button
               id="settings-export-btn"

@@ -8,6 +8,7 @@ import {
   getMonthExpenses,
   getCategoryById,
   getCategoryTotals,
+  normalizeDateString,
 } from '../utils/helpers';
 import { format } from 'date-fns';
 
@@ -70,7 +71,9 @@ export default function Dashboard({ onAddNew, setActiveTab }) {
 
   const thisMonthExpenses = useMemo(() => getMonthExpenses(expenses, 0), [expenses]);
   const recentExpenses = useMemo(() =>
-    [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5),
+    [...expenses]
+      .sort((a, b) => new Date(normalizeDateString(b.date)) - new Date(normalizeDateString(a.date)))
+      .slice(0, 5),
     [expenses]
   );
 
@@ -86,7 +89,7 @@ export default function Dashboard({ onAddNew, setActiveTab }) {
   const todayTotal = useMemo(() => {
     const today = format(new Date(), 'yyyy-MM-dd');
     return expenses
-      .filter(e => e.date === today)
+      .filter(e => normalizeDateString(e.date) === today)
       .reduce((s, e) => s + Number(e.amount), 0);
   }, [expenses]);
 

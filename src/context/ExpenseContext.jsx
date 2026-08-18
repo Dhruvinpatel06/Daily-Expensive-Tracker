@@ -9,7 +9,7 @@ export function ExpenseProvider({ children }) {
   const [settings, setSettings] = useState({ currency: '₹', name: 'My Expenses' });
   const [toast, setToast] = useState(null);
 
-  // Load from storage on mount
+  // Load and sanitize data from storage on mount
   useEffect(() => {
     const data = storage.load();
     setExpenses(data.expenses || []);
@@ -60,11 +60,32 @@ export function ExpenseProvider({ children }) {
     showToast('Expense deleted', 'danger');
   }, [showToast]);
 
+  // Restore July & August expense records
+  const restoreJulyAndAugustData = useCallback(() => {
+    const updated = storage.restoreJulyAndAugustData();
+    setExpenses(updated);
+    showToast('July & August 2026 data fully restored!');
+  }, [showToast]);
+
   // Restore July expense records
   const restoreJulyData = useCallback(() => {
     const updated = storage.restoreJulyData();
     setExpenses(updated);
     showToast('July 2026 expense data restored!');
+  }, [showToast]);
+
+  // Restore August expense records
+  const restoreAugustData = useCallback(() => {
+    const updated = storage.restoreAugustData();
+    setExpenses(updated);
+    showToast('August 2026 expense data restored!');
+  }, [showToast]);
+
+  // Clean old Jan/Feb records
+  const cleanJanFebExpenses = useCallback(() => {
+    const updated = storage.cleanJanFebExpenses();
+    setExpenses(updated);
+    showToast('Removed outdated Jan/Feb entries!');
   }, [showToast]);
 
   // Update settings
@@ -87,7 +108,10 @@ export function ExpenseProvider({ children }) {
       addExpense,
       editExpense,
       deleteExpense,
+      restoreJulyAndAugustData,
       restoreJulyData,
+      restoreAugustData,
+      cleanJanFebExpenses,
       updateSettings,
       exportCSV,
       toast,
