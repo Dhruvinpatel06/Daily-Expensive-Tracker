@@ -1,0 +1,34 @@
+[
+  {
+    "id": "0a7770b1-0be9-4dc4-8035-d56a161c2932",
+    "category": "food",
+    "amount": 318,
+    "date": "2026-08-02",
+    "notes": "",
+    "createdAt": "2026-06-14T06:57:00.480Z"
+  },
+  {
+    "id": "8152622a-eb83-4973-b499-dcb541c9802f",
+    "category": "food",
+    "amount": 122,
+    "date": "2026-08-01",
+    "notes": "",
+    "createdAt": "2026-06-14T06:29:16.966Z"
+  },
+  {
+    "id": "2968012d-3aef-4188-a1c1-16620b13a870",
+    "category": "food",
+    "amount": 132,
+    "date": "2026-07-02",
+    "notes": "",
+    "createdAt": "2026-06-14T06:57:17.158Z"
+  },
+  {
+    "id": "c6955431-f06c-476f-b4cc-0faee408a353",
+    "category": "food",
+    "amount": 84,
+    "date": "2026-07-01",
+    "notes": "",
+    "createdAt": "2026-06-14T06:28:50.731Z"
+  }
+]

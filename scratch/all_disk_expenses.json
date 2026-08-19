@@ -1,0 +1,272 @@
+[
+  {
+    "id": "0a7770b1-0be9-4dc4-8035-d56a161c2932",
+    "category": "food",
+    "amount": 318,
+    "date": "2026-08-02",
+    "notes": "",
+    "createdAt": "2026-06-14T06:57:00.480Z"
+  },
+  {
+    "id": "8152622a-eb83-4973-b499-dcb541c9802f",
+    "category": "food",
+    "amount": 122,
+    "date": "2026-08-01",
+    "notes": "",
+    "createdAt": "2026-06-14T06:29:16.966Z"
+  },
+  {
+    "id": "2968012d-3aef-4188-a1c1-16620b13a870",
+    "category": "food",
+    "amount": 132,
+    "date": "2026-07-02",
+    "notes": "",
+    "createdAt": "2026-06-14T06:57:17.158Z"
+  },
+  {
+    "id": "c6955431-f06c-476f-b4cc-0faee408a353",
+    "category": "food",
+    "amount": 84,
+    "date": "2026-07-01",
+    "notes": "",
+    "createdAt": "2026-06-14T06:28:50.731Z"
+  },
+  {
+    "date": "2026-06-02",
+    "merchant": "WIPRO LTD",
+    "category": "salary",
+    "amount": 45000,
+    "description": "SALARY CREDIT MAY"
+  },
+  {
+    "date": "2026-06-08",
+    "merchant": "BigBasket",
+    "category": "grocery",
+    "amount": -3200,
+    "description": "Grocery order"
+  },
+  {
+    "date": "2026-06-12",
+    "merchant": "Tanishq",
+    "category": "jewellery",
+    "amount": -42000,
+    "description": "Jewellery purchase"
+  },
+  {
+    "date": "2026-06-16",
+    "merchant": "HDFC Bank EMI",
+    "category": "emi",
+    "amount": -18500,
+    "description": "New Home Loan EMI"
+  },
+  {
+    "date": "2026-06-20",
+    "merchant": "MakeMyTrip",
+    "category": "travel",
+    "amount": -38000,
+    "description": "Goa honeymoon booking 2 pax"
+  },
+  {
+    "date": "2026-06-28",
+    "merchant": "WIPRO LTD",
+    "category": "salary",
+    "amount": 82000,
+    "description": "SALARY CREDIT JUNE"
+  },
+  {
+    "date": "2026-06-04",
+    "merchant": "Infosys Ltd",
+    "category": "salary",
+    "amount": 68000,
+    "description": "SALARY CREDIT"
+  },
+  {
+    "date": "2026-06-10",
+    "merchant": "Apollo Pharmacy",
+    "category": "medical",
+    "amount": -6400,
+    "description": "Pharmacy purchase"
+  },
+  {
+    "date": "2026-06-14",
+    "merchant": "Mothercare",
+    "category": "baby",
+    "amount": -14500,
+    "description": "Baby products"
+  },
+  {
+    "date": "2026-06-18",
+    "merchant": "Apollo Pharmacy",
+    "category": "medical",
+    "amount": -5200,
+    "description": "Pharmacy purchase"
+  },
+  {
+    "date": "2026-06-22",
+    "merchant": "BigBasket",
+    "category": "grocery",
+    "amount": -5800,
+    "description": "Grocery bulk order"
+  },
+  {
+    "date": "2026-06-27",
+    "merchant": "Mothercare",
+    "category": "baby",
+    "amount": -9200,
+    "description": "Baby products"
+  },
+  {
+    "date": "2026-06-03",
+    "merchant": "Self Transfer",
+    "category": "other",
+    "amount": 120000,
+    "description": "Funds transfer in"
+  },
+  {
+    "date": "2026-06-09",
+    "merchant": "GST Network",
+    "category": "tax",
+    "amount": -45000,
+    "description": "GST Payment new registration"
+  },
+  {
+    "date": "2026-06-13",
+    "merchant": "Vendor Textiles Co",
+    "category": "business",
+    "amount": -210000,
+    "description": "Bulk vendor payment"
+  },
+  {
+    "date": "2026-06-19",
+    "merchant": "Vendor Packaging Ltd",
+    "category": "business",
+    "amount": -95000,
+    "description": "Vendor payment"
+  },
+  {
+    "date": "2026-06-01",
+    "merchant": "Govt TN Payroll",
+    "category": "salary",
+    "amount": 58000,
+    "description": "SALARY CREDIT - last"
+  },
+  {
+    "date": "2026-06-11",
+    "merchant": "PPF Withdrawal",
+    "category": "investment",
+    "amount": 240000,
+    "description": "PPF maturity withdrawal"
+  },
+  {
+    "date": "2026-06-17",
+    "merchant": "Apollo Hospitals",
+    "category": "medical",
+    "amount": -8500,
+    "description": "Medical checkup"
+  },
+  {
+    "date": "2026-06-29",
+    "merchant": "MedPlus",
+    "category": "medical",
+    "amount": -3100,
+    "description": "Pharmacy purchase"
+  },
+  {
+    "date": "2026-06-06",
+    "merchant": "TechCorp Solutions",
+    "category": "salary",
+    "amount": 32000,
+    "description": "SALARY CREDIT - first payroll"
+  },
+  {
+    "date": "2026-06-10",
+    "merchant": "Ola Cabs",
+    "category": "travel",
+    "amount": -1800,
+    "description": "Cab to tech park"
+  },
+  {
+    "date": "2026-06-14",
+    "merchant": "Swiggy",
+    "category": "food",
+    "amount": -650,
+    "description": "Food delivery"
+  },
+  {
+    "date": "2026-06-16",
+    "merchant": "Ola Cabs",
+    "category": "travel",
+    "amount": -1650,
+    "description": "Cab to tech park"
+  },
+  {
+    "date": "2026-06-21",
+    "merchant": "Swiggy",
+    "category": "food",
+    "amount": -720,
+    "description": "Food delivery"
+  },
+  {
+    "date": "2026-06-26",
+    "merchant": "Swiggy",
+    "category": "food",
+    "amount": -580,
+    "description": "Food delivery"
+  },
+  {
+    "date": "2026-06-02",
+    "merchant": "TCS Payroll",
+    "category": "salary",
+    "amount": 125000,
+    "description": "SALARY CREDIT"
+  },
+  {
+    "date": "2026-06-10",
+    "merchant": "Sobha Developers",
+    "category": "home",
+    "amount": -500000,
+    "description": "Downpayment home booking"
+  },
+  {
+    "date": "2026-06-15",
+    "merchant": "Stamp Duty Registry",
+    "category": "tax",
+    "amount": -95000,
+    "description": "Property registration fees"
+  },
+  {
+    "date": "2026-06-25",
+    "merchant": "IKEA Bangalore",
+    "category": "other",
+    "amount": -42000,
+    "description": "Home furniture purchase"
+  },
+  {
+    "date": "2026-06-05",
+    "merchant": "Accenture",
+    "category": "salary",
+    "amount": 90000,
+    "description": "SALARY CREDIT"
+  },
+  {
+    "date": "2026-06-12",
+    "merchant": "Emirates Airlines",
+    "category": "travel",
+    "amount": -65000,
+    "description": "Intl flight to London"
+  },
+  {
+    "date": "2026-06-18",
+    "merchant": "Thomas Cook Forex",
+    "category": "travel",
+    "amount": -120000,
+    "description": "Forex card load USD"
+  },
+  {
+    "date": "2026-06-28",
+    "merchant": "Mumbai Duty Free",
+    "category": "travel",
+    "amount": -8500,
+    "description": "Perfume and chocolates"
+  }
+]

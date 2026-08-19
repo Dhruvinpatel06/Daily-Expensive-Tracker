@@ -9,7 +9,7 @@ export function ExpenseProvider({ children }) {
   const [settings, setSettings] = useState({ currency: '₹', name: 'My Expenses' });
   const [toast, setToast] = useState(null);
 
-  // Load and sanitize data from storage on mount
+  // Load genuine user data from storage on mount
   useEffect(() => {
     const data = storage.load();
     setExpenses(data.expenses || []);
@@ -38,6 +38,14 @@ export function ExpenseProvider({ children }) {
     return newExpense;
   }, [showToast]);
 
+  // Add batch expenses
+  const addBatchExpenses = useCallback((newItems) => {
+    const updated = storage.addBatchExpenses(newItems);
+    setExpenses(updated);
+    showToast(`Added ${newItems.length} expenses successfully!`);
+    return updated;
+  }, [showToast]);
+
   // Edit expense - auto-saves
   const editExpense = useCallback((id, updates) => {
     setExpenses(prev => {
@@ -58,34 +66,6 @@ export function ExpenseProvider({ children }) {
       return updated;
     });
     showToast('Expense deleted', 'danger');
-  }, [showToast]);
-
-  // Scan & recover all data from all browser storage
-  const scanAndRecoverAllData = useCallback(() => {
-    const updated = storage.scanAndRecoverAllData();
-    setExpenses(updated);
-    showToast(`Recovered ${updated.length} expense records!`);
-  }, [showToast]);
-
-  // Restore July & August expense records
-  const restoreJulyAndAugustData = useCallback(() => {
-    const updated = storage.restoreJulyAndAugustData();
-    setExpenses(updated);
-    showToast('July & August 2026 data fully restored!');
-  }, [showToast]);
-
-  // Restore July expense records
-  const restoreJulyData = useCallback(() => {
-    const updated = storage.restoreJulyData();
-    setExpenses(updated);
-    showToast('July 2026 expense data restored!');
-  }, [showToast]);
-
-  // Restore August expense records
-  const restoreAugustData = useCallback(() => {
-    const updated = storage.restoreAugustData();
-    setExpenses(updated);
-    showToast('August 2026 expense data restored!');
   }, [showToast]);
 
   // Import JSON
@@ -109,6 +89,18 @@ export function ExpenseProvider({ children }) {
       showToast(`Imported ${res.count} records successfully!`);
     } else {
       showToast(res.error || 'Failed to import CSV', 'danger');
+    }
+  }, [showToast]);
+
+  // Extract from raw string
+  const extractAndRestoreFromRaw = useCallback((rawString) => {
+    const res = storage.extractAndRestoreFromRaw(rawString);
+    if (res.success) {
+      const updated = storage.getExpenses();
+      setExpenses(updated);
+      showToast(`Extracted and restored ${res.count} records!`);
+    } else {
+      showToast('No valid expense records found in text', 'danger');
     }
   }, [showToast]);
 
@@ -136,14 +128,12 @@ export function ExpenseProvider({ children }) {
       expenses,
       settings,
       addExpense,
+      addBatchExpenses,
       editExpense,
       deleteExpense,
-      scanAndRecoverAllData,
-      restoreJulyAndAugustData,
-      restoreJulyData,
-      restoreAugustData,
       importJSON,
       importCSV,
+      extractAndRestoreFromRaw,
       updateSettings,
       exportCSV,
       exportJSON,
