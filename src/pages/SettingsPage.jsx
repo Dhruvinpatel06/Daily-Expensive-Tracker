@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Save, Trash2, AlertTriangle, Upload, Download, Plus, Database, Check, Eye } from 'lucide-react';
+import { Save, Trash2, AlertTriangle, Upload, Download, Plus, Database, Check, Eye, Sparkles } from 'lucide-react';
 import { useExpenses } from '../context/ExpenseContext';
 import { storage } from '../utils/storage';
 import { CATEGORIES, getTodayString } from '../utils/helpers';
@@ -23,6 +23,7 @@ export default function SettingsPage() {
     exportJSON,
     importJSON,
     importCSV,
+    deduplicate,
     addBatchExpenses,
     extractAndRestoreFromRaw,
   } = useExpenses();
@@ -50,7 +51,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     refreshStorageInspector();
-  }, [expenses]);
+  }, [expenses.length]);
 
   const handleSave = () => {
     updateSettings(form);
@@ -124,7 +125,7 @@ export default function SettingsPage() {
           Settings & Data Control
         </h1>
         <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '14px' }}>
-          Manage your expenses, backup files, and recovery tools
+          Manage your expenses, clean duplicates, backup files, and recovery tools
         </p>
       </div>
 
@@ -165,21 +166,37 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <button
-          id="save-settings-btn"
-          className="btn-primary"
-          onClick={handleSave}
-          style={{
-            padding: '10px 18px',
-            fontSize: '13px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            alignSelf: 'flex-start',
-          }}
-        >
-          {saved ? '✅ Saved!' : <><Save size={14} /> Save Settings</>}
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            id="save-settings-btn"
+            className="btn-primary"
+            onClick={handleSave}
+            style={{
+              padding: '10px 18px',
+              fontSize: '13px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            {saved ? '✅ Saved!' : <><Save size={14} /> Save Settings</>}
+          </button>
+
+          <button
+            id="deduplicate-btn"
+            className="btn-edit"
+            onClick={deduplicate}
+            style={{
+              padding: '10px 18px',
+              fontSize: '13px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <Sparkles size={14} /> Deduplicate & Clean All Transactions
+          </button>
+        </div>
       </div>
 
       {/* Live Browser Storage Inspector & Recovery */}

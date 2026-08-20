@@ -19,7 +19,7 @@ export const getCategoryById = (id) =>
 export const formatCurrency = (amount, currency = '₹') =>
   `${currency}${Number(amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-// Correctly parse and fix any inverted or malformed date string into YYYY-MM-DD
+// Correctly parse and format date strings into standard YYYY-MM-DD
 export const normalizeDateString = (dateStr) => {
   if (!dateStr) return format(new Date(), 'yyyy-MM-dd');
   const str = String(dateStr).trim();
@@ -28,26 +28,12 @@ export const normalizeDateString = (dateStr) => {
   const ymdMatch = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
   if (ymdMatch) {
     const y = ymdMatch[1];
-    let part2 = parseInt(ymdMatch[2], 10);
-    let part3 = parseInt(ymdMatch[3], 10);
+    const part2 = parseInt(ymdMatch[2], 10);
+    const part3 = parseInt(ymdMatch[3], 10);
 
-    // Case 1: Inverted YYYY-DD-MM where month is 08 (August) and day was in position 2 (e.g. 2026-01-08 -> meant 2026-08-01)
-    if (part3 === 8 && part2 <= 31) {
-      return `${y}-08-${String(part2).padStart(2, '0')}`;
-    }
-    // Case 2: Inverted YYYY-DD-MM where month is 07 (July) and day was in position 2 (e.g. 2026-01-07 -> meant 2026-07-01)
-    if (part3 === 7 && part2 <= 31) {
-      return `${y}-07-${String(part2).padStart(2, '0')}`;
-    }
-    // Case 3: Month > 12 (e.g. 2026-15-08 -> meant 2026-08-15)
+    // If month > 12, it's YYYY-DD-MM (e.g. 2026-15-08 -> 2026-08-15)
     if (part2 > 12 && part3 <= 12) {
       return `${y}-${String(part3).padStart(2, '0')}-${String(part2).padStart(2, '0')}`;
-    }
-    // Case 4: Any leftover 2026-01 or 2026-02 date that was entered during July/August tracking
-    if (y === '2026' && (part2 === 1 || part2 === 2)) {
-      // Remap to August (or July if day > 18)
-      const targetMonth = part3 > 18 ? '07' : '08';
-      return `${y}-${targetMonth}-${String(part3).padStart(2, '0')}`;
     }
 
     return `${y}-${String(part2).padStart(2, '0')}-${String(part3).padStart(2, '0')}`;

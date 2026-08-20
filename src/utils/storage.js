@@ -1,4 +1,4 @@
-// Pure persistent storage using localStorage - only stores real user data
+// Pure persistent storage using localStorage - only stores real user data with automatic deduplication
 
 import { normalizeDateString } from './helpers';
 import { v4 as uuidv4 } from 'uuid';
@@ -21,8 +21,25 @@ export function sanitizeExpenseItem(item) {
   };
 }
 
+// Automatically collapse multiple identical records into one single original record
+export function deduplicateExpenses(list = []) {
+  const seen = new Set();
+  const unique = [];
+  for (const item of list) {
+    const s = sanitizeExpenseItem(item);
+    if (!s) continue;
+    const sig = `${s.date}_${s.category}_${s.amount.toFixed(2)}_${s.notes}`;
+    if (!seen.has(sig)) {
+      seen.add(sig);
+      unique.push(s);
+    }
+  }
+  unique.sort((a, b) => new Date(b.date) - new Date(a.date));
+  return unique;
+}
+
 export const storage = {
-  // Load real user expenses from localStorage
+  // Load real user expenses from localStorage with auto-deduplication
   load() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -33,9 +50,9 @@ export const storage = {
         try {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed.expenses)) {
-            expenses = parsed.expenses.map(sanitizeExpenseItem).filter(Boolean);
+            expenses = parsed.expenses;
           } else if (Array.isArray(parsed)) {
-            expenses = parsed.map(sanitizeExpenseItem).filter(Boolean);
+            expenses = parsed;
           }
           if (parsed.settings) settings = parsed.settings;
         } catch {}
@@ -48,18 +65,25 @@ export const storage = {
           try {
             const backupParsed = JSON.parse(backupRaw);
             if (Array.isArray(backupParsed.expenses)) {
-              expenses = backupParsed.expenses.map(sanitizeExpenseItem).filter(Boolean);
+              expenses = backupParsed.expenses;
             } else if (Array.isArray(backupParsed)) {
-              expenses = backupParsed.map(sanitizeExpenseItem).filter(Boolean);
+              expenses = backupParsed;
             }
           } catch {}
         }
       }
 
-      // Sort newest first
-      expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+      // Deduplicate to eliminate any duplicate multiplication
+      const cleanExpenses = deduplicateExpenses(expenses);
 
-      return { expenses, settings };
+      // If deduplication removed duplicates, save the clean version back immediately
+      if (cleanExpenses.length !== expenses.length) {
+        const cleanData = { expenses: cleanExpenses, settings };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanData));
+        localStorage.setItem(BACKUP_KEY, JSON.stringify(cleanData));
+      }
+
+      return { expenses: cleanExpenses, settings };
     } catch (err) {
       console.error('Storage load failed:', err);
       return { expenses: [], settings: { currency: '₹', name: 'My Expenses' } };
@@ -69,8 +93,9 @@ export const storage = {
   // Save all data to localStorage & backup key
   save(data) {
     try {
+      const cleanExpenses = deduplicateExpenses(data.expenses || []);
       const cleanData = {
-        expenses: (data.expenses || []).map(sanitizeExpenseItem).filter(Boolean),
+        expenses: cleanExpenses,
         settings: data.settings || { currency: '₹', name: 'My Expenses' }
       };
       const json = JSON.stringify(cleanData);
@@ -91,8 +116,15 @@ export const storage = {
   // Save expenses array
   saveExpenses(expenses) {
     const data = this.load();
-    data.expenses = (expenses || []).map(sanitizeExpenseItem).filter(Boolean);
-    data.expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+    data.expenses = expenses;
+    this.save(data);
+    return data.expenses;
+  },
+
+  // Deduplicate all expenses explicitly
+  deduplicate() {
+    const data = this.load();
+    data.expenses = deduplicateExpenses(data.expenses);
     this.save(data);
     return data.expenses;
   },
@@ -100,10 +132,8 @@ export const storage = {
   // Add multiple expenses at once (Batch add)
   addBatchExpenses(newItems) {
     const data = this.load();
-    const cleanNew = (newItems || []).map(sanitizeExpenseItem).filter(Boolean);
-    const combined = [...cleanNew, ...data.expenses];
-    combined.sort((a, b) => new Date(b.date) - new Date(a.date));
-    data.expenses = combined;
+    const combined = [...(newItems || []), ...data.expenses];
+    data.expenses = deduplicateExpenses(combined);
     this.save(data);
     return data.expenses;
   },
@@ -137,7 +167,6 @@ export const storage = {
     if (!rawString) return { success: false, count: 0 };
     const items = [];
     
-    // Try JSON
     try {
       const parsed = JSON.parse(rawString);
       if (Array.isArray(parsed)) {
@@ -232,8 +261,9 @@ export const storage = {
 
   // Export to CSV
   exportCSV(expenses) {
+    const cleanExpenses = deduplicateExpenses(expenses || []);
     const headers = ['Date', 'Category', 'Amount', 'Notes'];
-    const rows = (expenses || []).map(e => [
+    const rows = cleanExpenses.map(e => [
       e.date,
       e.category,
       e.amount,
@@ -251,7 +281,8 @@ export const storage = {
 
   // Export to JSON
   exportJSON(expenses) {
-    const data = { expenses: expenses || [], exportedAt: new Date().toISOString() };
+    const cleanExpenses = deduplicateExpenses(expenses || []);
+    const data = { expenses: cleanExpenses, exportedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { storage } from '../utils/storage';
+import { storage, deduplicateExpenses } from '../utils/storage';
 import { v4 as uuidv4 } from 'uuid';
 
 const ExpenseContext = createContext(null);
@@ -9,7 +9,7 @@ export function ExpenseProvider({ children }) {
   const [settings, setSettings] = useState({ currency: '₹', name: 'My Expenses' });
   const [toast, setToast] = useState(null);
 
-  // Load genuine user data from storage on mount
+  // Load genuine user data with automatic deduplication on mount
   useEffect(() => {
     const data = storage.load();
     setExpenses(data.expenses || []);
@@ -30,7 +30,7 @@ export function ExpenseProvider({ children }) {
       createdAt: new Date().toISOString(),
     };
     setExpenses(prev => {
-      const updated = [newExpense, ...prev];
+      const updated = deduplicateExpenses([newExpense, ...prev]);
       storage.saveExpenses(updated);
       return updated;
     });
@@ -49,8 +49,8 @@ export function ExpenseProvider({ children }) {
   // Edit expense - auto-saves
   const editExpense = useCallback((id, updates) => {
     setExpenses(prev => {
-      const updated = prev.map(e =>
-        e.id === id ? { ...e, ...updates, updatedAt: new Date().toISOString() } : e
+      const updated = deduplicateExpenses(
+        prev.map(e => (e.id === id ? { ...e, ...updates, updatedAt: new Date().toISOString() } : e))
       );
       storage.saveExpenses(updated);
       return updated;
@@ -66,6 +66,13 @@ export function ExpenseProvider({ children }) {
       return updated;
     });
     showToast('Expense deleted', 'danger');
+  }, [showToast]);
+
+  // Explicit deduplicate function
+  const deduplicate = useCallback(() => {
+    const updated = storage.deduplicate();
+    setExpenses(updated);
+    showToast('All duplicate transactions merged!');
   }, [showToast]);
 
   // Import JSON
@@ -131,6 +138,7 @@ export function ExpenseProvider({ children }) {
       addBatchExpenses,
       editExpense,
       deleteExpense,
+      deduplicate,
       importJSON,
       importCSV,
       extractAndRestoreFromRaw,
